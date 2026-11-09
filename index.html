@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#111827">
+  <title>A Very Important Question</title>
+  <style>
+    :root { --bg:#111827; --card:#1f2937; --pink:#fb7185; --text:#f9fafb; --muted:#cbd5e1; }
+    * { box-sizing: border-box; }
+    body {
+      margin:0; min-height:100vh; display:grid; place-items:center; padding:24px;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; color:var(--text);
+      background:radial-gradient(circle at 20% 10%, #3b1f46 0, transparent 36%),
+                 radial-gradient(circle at 90% 90%, #1e3a5f 0, transparent 35%), var(--bg);
+    }
+    .card {
+      width:min(100%,560px); padding:clamp(24px,6vw,44px); text-align:center;
+      background:rgba(31,41,55,.94); border:1px solid rgba(255,255,255,.12);
+      border-radius:28px; box-shadow:0 24px 80px rgba(0,0,0,.35);
+    }
+    .eyebrow { color:#fda4af; text-transform:uppercase; letter-spacing:.16em; font-size:.75rem; font-weight:800; }
+    h1 { font-size:clamp(2rem,7vw,3.2rem); line-height:1.05; margin:14px 0; }
+    .message { color:var(--muted); line-height:1.7; white-space:pre-line; margin:18px auto 24px; max-width:440px; }
+    label { display:block; text-align:left; color:var(--muted); font-size:.9rem; margin:0 auto 7px; max-width:390px; }
+    input {
+      width:min(100%,390px); padding:14px 16px; border-radius:12px; border:1px solid #475569;
+      background:#0f172a; color:white; font:inherit; outline:none; margin-bottom:22px;
+    }
+    input:focus { border-color:#fb7185; box-shadow:0 0 0 3px #fb718533; }
+    .arena { position:relative; width:min(100%,390px); height:145px; margin:0 auto; }
+    button {
+      border:0; border-radius:999px; padding:14px 27px; font:700 1rem system-ui;
+      cursor:pointer; touch-action:manipulation; box-shadow:0 8px 22px #0004;
+    }
+    #yes { position:absolute; left:8%; top:35px; background:#34d399; color:#052e24; min-width:125px; }
+    #no { position:absolute; right:8%; top:35px; background:#fb7185; color:#4c0519; min-width:125px; transition:left .12s ease,top .12s ease; }
+    .hint { color:#94a3b8; font-size:.82rem; margin-top:8px; }
+    .hidden { display:none !important; }
+    #success h2 { font-size:2rem; margin:10px 0; }
+    #status { min-height:1.3em; color:#fda4af; font-size:.85rem; margin-top:12px; }
+    .footer { margin-top:24px; color:#64748b; font-size:.72rem; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <section id="question">
+      <div class="eyebrow">A message for you</div>
+      <h1>One tiny question…</h1>
+      <!-- CUSTOMIZE THIS MESSAGE -->
+      <p class="message" id="customMessage">[Write your custom message here. Replace this text in index.html before publishing.]</p>
+
+      <label for="friendName">Your name <span>(optional)</span></label>
+      <input id="friendName" maxlength="60" autocomplete="name" placeholder="Enter your name (optional)">
+
+      <div class="arena" id="arena">
+        <button id="yes" type="button">YES ❤️</button>
+        <button id="no" type="button">NO 🙈</button>
+      </div>
+      <p class="hint">Choose wisely. The buttons have their own personalities.</p>
+      <p id="status" role="status" aria-live="polite"></p>
+    </section>
+
+    <section id="success" class="hidden">
+      <div class="eyebrow">Decision recorded</div>
+      <h2>HAHA! We knew it! 😂</h2>
+      <p class="message" id="finalMessage">Your YES has been officially noted. There is no appeal process.</p>
+      <p class="hint">Thanks for playing along!</p>
+    </section>
+    <div class="footer">Just a friendly prank — no personal details beyond the optional name are collected.</div>
+  </main>
+
+  <script>
+    // Paste your deployed Google Apps Script Web App URL here.
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwGD9eJ7E-mLk9fgprbZkZUc2yVI6QbtEG37NsecG1ZNw5xRd_x_lrKPRggv_TBaf5X/exec";
+
+    const arena = document.getElementById("arena");
+    const noButton = document.getElementById("no");
+    const yesButton = document.getElementById("yes");
+    const question = document.getElementById("question");
+    const success = document.getElementById("success");
+    const status = document.getElementById("status");
+    let noAttempts = 0;
+    let submitted = false;
+
+    function moveNoButton() {
+      if (submitted) return;
+      noAttempts++;
+      const maxX = Math.max(0, arena.clientWidth - noButton.offsetWidth);
+      const maxY = Math.max(0, arena.clientHeight - noButton.offsetHeight);
+      noButton.style.left = Math.floor(Math.random() * (maxX + 1)) + "px";
+      noButton.style.top = Math.floor(Math.random() * (maxY + 1)) + "px";
+      noButton.style.right = "auto";
+      status.textContent = "Nope! That button is feeling adventurous. 😜";
+    }
+
+    // Mouse users: move as soon as the pointer enters the NO button.
+    noButton.addEventListener("pointerenter", moveNoButton);
+    // Touch users: move when they try to tap it.
+    noButton.addEventListener("touchstart", (event) => {
+      event.preventDefault();
+      moveNoButton();
+    }, { passive: false });
+    noButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      moveNoButton();
+    });
+
+    async function recordYes() {
+      if (submitted) return;
+      submitted = true;
+      const name = document.getElementById("friendName").value.trim();
+      const payload = {
+        name: name || "Not provided",
+        response: "YES",
+        no_attempts: noAttempts,
+        submitted_at: new Date().toISOString()
+      };
+
+      question.classList.add("hidden");
+      success.classList.remove("hidden");
+
+      if (!GOOGLE_SCRIPT_URL.startsWith("https://script.google.com/")) {
+        status.textContent = "";
+        return;
+      }
+
+      try {
+        // no-cors is used because Apps Script web apps do not provide browser CORS headers.
+        await fetch(GOOGLE_SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+          body: new URLSearchParams(payload).toString()
+        });
+      } catch (error) {
+        console.error("Could not submit response:", error);
+      }
+    }
+    yesButton.addEventListener("click", recordYes);
+  </script>
+</body>
+</html>
