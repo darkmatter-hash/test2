@@ -107,15 +107,27 @@
     });
 
     async function recordYes() {
-      if (submitted) return;
-      submitted = true;
-      const name = document.getElementById("friendName").value.trim();
-      const payload = {
-        name: name || "Not provided",
-        response: "YES",
-        no_attempts: noAttempts,
-        submitted_at: new Date().toISOString()
-      };
+  if (submitted) return;
+
+  const nameInput = document.getElementById("friendName");
+  const name = nameInput.value.trim();
+
+  // Check whether name is entered
+  if (name === "") {
+    alert("Please enter your name first! ❤️");
+    nameInput.focus();
+    return;
+  }
+
+  // Only proceed after name validation
+  submitted = true;
+
+  const payload = {
+    name: name,
+    response: "YES",
+    no_attempts: noAttempts,
+    submitted_at: new Date().toISOString()
+  };
 
       question.classList.add("hidden");
       success.classList.remove("hidden");
